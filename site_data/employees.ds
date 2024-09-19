@@ -1,0 +1,28 @@
+Writer.OpenTag('data');
+
+  var Query: TZQuery;
+  Query := TZQuery.Create;
+  Query.Connection := Connection;
+
+  Writer.WriteAttribute('json:array', '1');
+
+  Query.SQL.Text := 'select * from SITE_GET_EMPLOYEES;';
+
+  Query.Open;
+
+  while not Query.EOF do begin
+    Writer.OpenTag('r');
+    var I: Integer;
+    for I := 0 to Query.FieldCount - 1 do begin
+      Writer.OpenTag(AnsiLowerCase(Query.Fields[I].FieldName));
+      Writer.WriteValue(Query.Fields[I].AsString);
+      Writer.CloseTag(AnsiLowerCase(Query.Fields[I].FieldName));
+    end;
+    Writer.CloseTag('r');
+    Query.Next;
+  end;
+
+    //SerializeDataset(Query, Writer);
+    //Query.Close;
+
+Writer.CloseTag('data');

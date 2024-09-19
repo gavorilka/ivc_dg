@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<app>
+  <name>Сервис для сайта лицей 369</name>
+  <services> 
+    <service default="true" name="employees" type="online" method="get" outputformat="json" auth="none"/>
+  </services>
+</app>
