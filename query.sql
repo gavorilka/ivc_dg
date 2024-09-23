@@ -18,14 +18,11 @@ BEGIN
     FOR
         SELECT L14.obj_id AS ID
                ,V59.val || ' ' || V60.val || ' ' || COALESCE(V61.val, '') AS FULL_NAME
-               --,V73.val AS START_DATE
                ,R239.val AS SEX
                ,R279.val AS IS_GRADUATE
                ,R280.val AS RANG
                ,R281.val AS CATEGORY
-               ,LIST(v66.val,', ') AS POSITION_NAME
-               --,v66.val AS POSITION_NAME
-               --,v589.val
+               ,LIST(DISTINCT v66.val,', ') AS POSITION_NAME
                ,E.EDU AS EDU
                ,RET.RETRAINING AS RETRAINING
                ,REF.REFRESHER_COURSES AS REFRESHER_COURSES
@@ -45,17 +42,10 @@ BEGIN
                     ''
                 ) AS MEDALS
                ,TEACH.DISCIPLINES AS TEACH_DISCIPLINES
---               ,CASE
---                    WHEN V240.blob_id IS NOT NULL THEN
---                        '{"id": "' || V240.blob_id || '", "name": "' || REPLACE(COALESCE(V240.val, ''), '"', '\"') || '"}'
---                    ELSE
---                        NULL
---                END AS PIC
         FROM LINKS L14
             JOIN VALS V59 ON V59.OBJ_ID = L14.OBJ_ID AND V59.PARAM_ID = 59 --Фамилия
             JOIN VALS V60 ON V60.OBJ_ID = L14.OBJ_ID AND V60.PARAM_ID = 60 --Имя
             LEFT JOIN VALS V61 ON V61.OBJ_ID = L14.OBJ_ID AND V61.PARAM_ID = 61 --Отчество
---            LEFT JOIN VALB V240 ON V240.OBJ_ID = L14.OBJ_ID AND V240.PARAM_ID = 240 AND V240.IS_DEL = 0 --Картинка
 
             JOIN VALL V239 ON V239.OBJ_ID = L14.OBJ_ID AND V239.PARAM_ID = 239 AND V239.IS_DEL = 0 --ссылка на пол
             JOIN LISTVALS LV239 ON LV239.LISTVAL_ID = V239.LISTVAL_ID
@@ -74,12 +64,10 @@ BEGIN
             LEFT JOIN RES_GET(LV281.RES_ID,  'RU') R281 ON 1 = 1
 
             JOIN LINKS L15 ON L15.PARENT_ID = L14.OBJ_ID AND L15.OBJ_TYPE_ID = 15 AND L15.DATE_DEL IS NULL
---            JOIN VALD V73 ON V73.OBJ_ID = L15.OBJ_ID AND V73.PARAM_ID = 73 AND V73.IS_DEL = 0 --Дата начала работы
             LEFT JOIN VALD V74 ON V74.OBJ_ID = L15.OBJ_ID AND V74.PARAM_ID = 74 AND V74.IS_DEL = 0 -- Дата уволнения
 
             JOIN LINKS LP13 ON LP13.OBJ_ID = L15.OBJ_ID AND LP13.PARENT_TYPE_ID = 13 AND LP13.DATE_DEL IS NULL
             JOIN VALS V66 ON V66.OBJ_ID = LP13.PARENT_ID AND V66.PARAM_ID = 66 AND V66.IS_DEL = 0  -- Должность из текстового поля
---            JOIN VALS V589 ON V589.OBJ_ID = LP13.PARENT_ID AND V589.PARAM_ID = 589 AND V589.IS_DEL = 0  -- Тоже должность от куда хз
 
             LEFT JOIN(
                 SELECT L33.PARENT_ID,
@@ -117,13 +105,13 @@ BEGIN
                 SELECT L36.PARENT_ID, 
                     '[' || LIST('{"company": "' || REPLACE(COALESCE(V2335.val, ''), '"', '\"') || '", "title": "' || REPLACE(COALESCE(V305.val, ''), '"', '\"') || '", "hours": "' || COALESCE(V306.val, '') || '", "date": "' || COALESCE(V310.val, '') || '"}', ', ') || ']' AS REFRESHER_COURSES
                 FROM LINKS L36
---                    LEFT JOIN VALS V304 ON V304.OBJ_ID = L36.OBJ_ID AND V304.PARAM_ID = 304 AND V304.IS_DEL = 0 -- Полное название ОУ КПК
                     LEFT JOIN VALS V2335 ON V2335.OBJ_ID = L36.OBJ_ID AND V2335.PARAM_ID = 2335 AND V2335.IS_DEL = 0 -- Название ОУ КПК
                     LEFT JOIN VALS V305 ON V305.OBJ_ID = L36.OBJ_ID AND V305.PARAM_ID = 305 AND V305.IS_DEL = 0 -- Название КПК
                     LEFT JOIN VALI V306 ON V306.OBJ_ID = L36.OBJ_ID AND V306.PARAM_ID = 306 AND V306.IS_DEL = 0 -- Количество часов
                     LEFT JOIN VALD V310 ON V310.OBJ_ID = L36.OBJ_ID AND V310.PARAM_ID = 310 AND V310.IS_DEL = 0 -- Дата
                 WHERE L36.OBJ_TYPE_ID = 36
                   AND L36.DATE_DEL IS NULL
+                  AND V310.VAL >= DATEADD(YEAR, -3, CURRENT_DATE)
                 GROUP BY L36.PARENT_ID
             ) REF ON REF.PARENT_ID = L14.OBJ_ID
             
@@ -238,31 +226,6 @@ BEGIN
                 GROUP BY L42.PARENT_ID
             ) ACHIEV42 ON ACHIEV42.PARENT_ID = L14.OBJ_ID
 
-            --JOIN LINKS L33 ON L33.PARENT_ID = L14.OBJ_ID AND L33.OBJ_TYPE_ID = 33 AND L33.DATE_DEL IS NULL
-            --LEFT JOIN OBJECT_PARAMS(L35.obj_id) VL300 ON VL300.PARAM_ID = 300
-            --38,39,40,41,42,43,44,395,51
-
---            JOIN LINKS L38 ON L38.PARENT_ID = L14.OBJ_ID AND L38.OBJ_TYPE_ID = 38 AND L38.DATE_DEL IS NULL --медаль "В память 300-летия Санкт-Петербурга" чек337
---            LEFT JOIN OBJECT_PARAMS(L38.obj_id) VL40 ON 1=1
-
---            JOIN LINKS L39 ON L39.PARENT_ID = L14.OBJ_ID AND L39.OBJ_TYPE_ID = 39 AND L39.DATE_DEL IS NULL --знак "Почетный работник общего образования РФ" чек345
---            LEFT JOIN OBJECT_PARAMS(L39.obj_id) VL39 ON 1=1
-
---            JOIN LINKS L40 ON L40.PARENT_ID = L14.OBJ_ID AND L40.OBJ_TYPE_ID = 40 AND L40.DATE_DEL IS NULL --Знак "За гуманизацию школы Санкт-Петербурга" чек341
---            LEFT JOIN OBJECT_PARAMS(L40.obj_id) VL40 ON 1=1
-
---            JOIN LINKS L41 ON L41.PARENT_ID = L14.OBJ_ID AND L41.OBJ_TYPE_ID = 41 AND L41.DATE_DEL IS NULL --Какие то достижения 349 год, 350 статус(победитель и т.д), 351 уровень(район) всё извлекать VALL и ренсить, кроме года он VALLD
---            LEFT JOIN OBJECT_PARAMS(L41.obj_id) VL41 ON 1=1
-
---            JOIN LINKS L42 ON L42.PARENT_ID = L14.OBJ_ID AND L42.OBJ_TYPE_ID = 42 AND L42.DATE_DEL IS NULL --Лучший учитель в общем какие то достижения год в 352, название чек353 VALL
---            LEFT JOIN OBJECT_PARAMS(L42.obj_id) VL42 ON 1=1
-
---            JOIN LINKS L43 ON L43.PARENT_ID = L14.OBJ_ID AND L43.OBJ_TYPE_ID = 43 AND L43.DATE_DEL IS NULL --Какие то электронные публикации есть только Вики
---            LEFT JOIN OBJECT_PARAMS(L43.obj_id) VL43 ON 1=1
-
---            JOIN LINKS L395 ON L395.PARENT_ID = L14.OBJ_ID AND L395.OBJ_TYPE_ID = 395 AND L395.DATE_DEL IS NULL --КПК по бжд
---            LEFT JOIN OBJECT_PARAMS(L395.obj_id) VL395 ON 1=1
-
         WHERE L14.PARENT_TYPE_ID = 2
             AND L14.OBJ_TYPE_ID = 14
             AND L14.DATE_DEL is null
@@ -279,24 +242,23 @@ BEGIN
             ,EXPERIENCE
             ,MEDALS
             ,TEACH_DISCIPLINES
---            ,PIC
+        HAVING LIST(DISTINCT V66.val,', ') LIKE '%Учитель%'
+            OR LIST(DISTINCT V66.val,', ') LIKE '%Педагог%'
+            OR LIST(DISTINCT V66.val,', ') LIKE '%Воспитатель%'
         ORDER BY FULL_NAME, POSITION_NAME
     INTO :ID
         ,:FULL_NAME
---        ,:START_DATE
         ,:SEX
         ,:IS_GRADUATE
         ,:RANG
         ,:CATEGORY
         ,:POSITION_NAME
---        ,:JOB_TITLE
         ,:EDU
         ,:RETRAINING
         ,:REFRESHER_COURSES
         ,:EXPERIENCE
         ,:MEDALS
         ,:TEACH_DISCIPLINES
---        ,:PIC
     DO
     BEGIN
         SUSPEND;
