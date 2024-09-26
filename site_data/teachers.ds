@@ -1,0 +1,14 @@
+Writer.OpenTag('data');
+
+  var Query: TZQuery;
+  Query := TZQuery.Create;
+  Query.Connection := Connection;
+
+  Query.SQL.Text := 'select * from SITE_GET_EMPLOYEES_JSON';
+
+  Query.Open;
+
+  SerializeDataset(Query, Writer);
+  Query.Close;
+
+Writer.CloseTag('data');
