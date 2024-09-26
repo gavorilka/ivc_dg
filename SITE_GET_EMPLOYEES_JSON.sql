@@ -213,41 +213,41 @@ BEGIN
     DO
     BEGIN
         -- Открываем новый элемент в массиве
-        TAG_NAME = 'employees:r';
+        TAG_NAME = 'employees:person';
         VAL = NULL;
         SUSPEND;
 
         -- Вставляем данные сотрудника
-        TAG_NAME = 'employees:r:id';
+        TAG_NAME = 'employees:person:id';
         VAL = :ID;
         SUSPEND;
 
-        TAG_NAME = 'employees:r:full_name';
+        TAG_NAME = 'employees:person:full_name';
         VAL = :FULL_NAME;
         SUSPEND;
 
-        TAG_NAME = 'employees:r:sex';
+        TAG_NAME = 'employees:person:sex';
         VAL = :SEX;
         SUSPEND;
 
-        TAG_NAME = 'employees:r:is_graduate';
+        TAG_NAME = 'employees:person:is_graduate';
         VAL = :IS_GRADUATE;
         SUSPEND;
 
-        TAG_NAME = 'employees:r:rang';
+        TAG_NAME = 'employees:person:rang';
         VAL = :RANG;
         SUSPEND;
 
-        TAG_NAME = 'employees:r:category';
+        TAG_NAME = 'employees:person:category';
         VAL = :CATEGORY;
         SUSPEND;
 
-        TAG_NAME = 'employees:r:position_name';
+        TAG_NAME = 'employees:person:position_name';
         VAL = :POSITION_NAME;
         SUSPEND;
 
         -- Если есть вложенные JSON-массивы, например, EDU
-        TAG_NAME = 'employees:r:edu::json&colon;array';
+        TAG_NAME = 'employees:person:edu::json&colon;array';
         VAL = 1;
         SUSPEND;
 
@@ -282,36 +282,36 @@ BEGIN
             ,EDU_DATE
         DO
         BEGIN
-            TAG_NAME = 'employees:r:edu:r';
+            TAG_NAME = 'employees:person:edu:obj';
             VAL = NULL;
             SUSPEND;
 
-            TAG_NAME = 'employees:r:edu:r:name';
+            TAG_NAME = 'employees:person:edu:obj:name';
             VAL = COALESCE(EDU_NAME, NULL);
             SUSPEND;
 
-            TAG_NAME = 'employees:r:edu:r:speciality';
+            TAG_NAME = 'employees:person:edu:obj:speciality';
             VAL = COALESCE(EDU_SPECIALITY, NULL);
             SUSPEND;
 
-            TAG_NAME = 'employees:r:edu:r:direction';
+            TAG_NAME = 'employees:person:edu:obj:direction';
             VAL = COALESCE(EDU_DIRECTION, NULL);
             SUSPEND;
 
-            TAG_NAME = 'employees:r:edu:r:level';
+            TAG_NAME = 'employees:person:edu:obj:level';
             VAL = COALESCE(EDU_LEVEL, NULL);
             SUSPEND;
 
-            TAG_NAME = 'employees:r:edu:r:pedType';
+            TAG_NAME = 'employees:person:edu:obj:pedType';
             VAL = COALESCE(EDU_PED_TYPE, NULL);
             SUSPEND;
 
-            TAG_NAME = 'employees:r:edu:r:date';
+            TAG_NAME = 'employees:person:edu:obj:date';
             VAL = COALESCE(EDU_DATE, NULL);
             SUSPEND;
         END
 
-        TAG_NAME = 'employees:r:retraining::json&colon;array';
+        TAG_NAME = 'employees:person:retraining::json&colon;array';
         VAL = 1;
         SUSPEND;
 
@@ -336,28 +336,28 @@ BEGIN
             ,RET_DATE
         DO
         BEGIN
-            TAG_NAME = 'employees:r:retraining:r';
+            TAG_NAME = 'employees:person:retraining:obj';
             VAL = NULL;
             SUSPEND;
 
-            TAG_NAME = 'employees:r:retraining:r:name';
+            TAG_NAME = 'employees:person:retraining:obj:name';
             VAL = COALESCE(RET_NAME, NULL);
             SUSPEND;
 
-            TAG_NAME = 'employees:r:retraining:r:speciality';
+            TAG_NAME = 'employees:person:retraining:obj:speciality';
             VAL = COALESCE(RET_SPECIALITY, NULL);
             SUSPEND;
 
-            TAG_NAME = 'employees:r:retraining:r:direction';
+            TAG_NAME = 'employees:person:retraining:obj:direction';
             VAL = COALESCE(RET_DIRECTION, NULL);
             SUSPEND;
 
-            TAG_NAME = 'employees:r:retraining:r:date';
+            TAG_NAME = 'employees:person:retraining:obj:date';
             VAL = COALESCE(RET_DATE, NULL);
             SUSPEND;
         END
 
-        TAG_NAME = 'employees:r:refresher_courses::json&colon;array';
+        TAG_NAME = 'employees:person:refresher_courses::json&colon;array';
         VAL = 1;
         SUSPEND;
 
@@ -383,28 +383,28 @@ BEGIN
             ,REF_DATE
         DO
         BEGIN
-            TAG_NAME = 'employees:r:refresher_courses:r';
+            TAG_NAME = 'employees:person:refresher_courses:obj';
             VAL = NULL;
             SUSPEND;
 
-            TAG_NAME = 'employees:r:refresher_courses:r:company';
+            TAG_NAME = 'employees:person:refresher_courses:obj:company';
             VAL = COALESCE(REF_COMPANY, NULL);
             SUSPEND;
 
-            TAG_NAME = 'employees:r:refresher_courses:r:title';
+            TAG_NAME = 'employees:person:refresher_courses:obj:title';
             VAL = COALESCE(REF_TITLE, NULL);
             SUSPEND;
 
-            TAG_NAME = 'employees:r:refresher_courses:r:hours';
+            TAG_NAME = 'employees:person:refresher_courses:obj:hours';
             VAL = COALESCE(REF_HOURS, NULL);
             SUSPEND;
 
-            TAG_NAME = 'employees:r:refresher_courses:r:date';
+            TAG_NAME = 'employees:person:refresher_courses:obj:date';
             VAL = COALESCE(REF_DATE, NULL);
             SUSPEND;
         END
 
-        TAG_NAME = 'employees:r:experience::json&colon;array';
+        TAG_NAME = 'employees:person:experience::json&colon;array';
         VAL = 1;
         SUSPEND;
         FOR
@@ -440,32 +440,32 @@ BEGIN
             ,EXP_DAYS
         DO
         BEGIN
-            TAG_NAME = 'employees:r:experience:r';
+            TAG_NAME = 'employees:person:experience:obj';
             VAL = NULL;
             SUSPEND;
 
-            TAG_NAME = 'employees:r:experience:r:type';
+            TAG_NAME = 'employees:person:experience:obj:type';
             VAL = COALESCE(EXP_TYPE, NULL);
             SUSPEND;
 
-            TAG_NAME = 'employees:r:experience:r:years';
+            TAG_NAME = 'employees:person:experience:obj:years';
             VAL = EXP_YEARS;
             SUSPEND;
 
-            TAG_NAME = 'employees:r:experience:r:months';
+            TAG_NAME = 'employees:person:experience:obj:months';
             VAL = EXP_MONTHS;
             SUSPEND;
 
-            TAG_NAME = 'employees:r:experience:r:days';
+            TAG_NAME = 'employees:person:experience:obj:days';
             VAL = EXP_DAYS;
             SUSPEND;
         END
 
-        TAG_NAME = 'employees:r:medals';
+        TAG_NAME = 'employees:person:medals';
         VAL = :MEDALS;
         SUSPEND;
 
-        TAG_NAME = 'employees:r:teach_disciplines';
+        TAG_NAME = 'employees:person:teach_disciplines';
         VAL = :TEACH_DISCIPLINES;
         SUSPEND;
     END
