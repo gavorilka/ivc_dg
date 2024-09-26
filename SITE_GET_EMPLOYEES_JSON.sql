@@ -11,7 +11,6 @@ AS
     DECLARE RANG varchar(50);
     DECLARE CATEGORY varchar(50);
     DECLARE POSITION_NAME varchar(4000);
-    DECLARE EXPERIENCE varchar(4000);
     DECLARE MEDALS varchar(4000);
     DECLARE TEACH_DISCIPLINES varchar(4000);
 
@@ -34,6 +33,12 @@ AS
     DECLARE REF_TITLE varchar(500);
     DECLARE REF_HOURS integer;
     DECLARE REF_DATE date;
+
+    --Опыт
+    DECLARE EXP_TYPE varchar(250);
+    DECLARE EXP_YEARS integer;
+    DECLARE EXP_MONTHS integer;
+    DECLARE EXP_DAYS integer;
 BEGIN
     -- Открываем массив сотрудников
     TAG_NAME = 'employees::json&colon;array';
@@ -50,7 +55,6 @@ BEGIN
             ,R280.val AS RANG
             ,R281.val AS CATEGORY
             ,LIST(DISTINCT v66.val,', ') AS POSITION_NAME
-            ,EXP.EXPERIENCE as EXPERIENCE
             ,NULLIF(
                 TRIM(BOTH ', '
                      FROM
@@ -92,37 +96,6 @@ BEGIN
 
             JOIN LINKS LP13 ON LP13.OBJ_ID = L15.OBJ_ID AND LP13.PARENT_TYPE_ID = 13 AND LP13.DATE_DEL IS NULL
             JOIN VALS V66 ON V66.OBJ_ID = LP13.PARENT_ID AND V66.PARAM_ID = 66 AND V66.IS_DEL = 0  -- Должность из текстового поля
-
-             LEFT JOIN (
-                SELECT
-                    E.PARENT_ID AS PARENT_ID,
-                    '[' || LIST(
-                            '{"type": "' || COALESCE(R.VAL, '') ||
-                            '", "years": "' || (E.TOTAL_YEARS + FLOOR((E.TOTAL_MONTHS + FLOOR(E.TOTAL_DAYS / 30)) / 12)) ||
-                            '", "months": "' || MOD(E.TOTAL_MONTHS + FLOOR(E.TOTAL_DAYS / 30), 12) ||
-                            '", "days": "' || MOD(E.TOTAL_DAYS, 30) || '"}'
-                        , ', ') || ']' AS EXPERIENCE
-                FROM (
-                 SELECT
-                    L85.PARENT_ID,
-                    V465.LISTVAL_ID AS LISTVAL_ID,
-                    -- Получаем результаты из процедуры
-                    SUM(G.YEARS) AS TOTAL_YEARS,
-                    SUM(G.MONTHS) AS TOTAL_MONTHS,
-                    SUM(G.DAYS) AS TOTAL_DAYS
-                    FROM LINKS L85
-                          LEFT JOIN VALL V465 ON V465.OBJ_ID = L85.OBJ_ID AND V465.PARAM_ID = 465 AND V465.IS_DEL = 0 -- Ссылка на название
-                          LEFT JOIN VALD V466 ON V466.OBJ_ID = L85.OBJ_ID AND V466.PARAM_ID = 466 AND V466.IS_DEL = 0 -- Дата начала
-                          LEFT JOIN VALD V467 ON V467.OBJ_ID = L85.OBJ_ID AND V467.PARAM_ID = 467 AND V467.IS_DEL = 0 -- Дата конца
-                          LEFT JOIN SITE_GET_YEARS_MONTHS_DAYS(V466.val, COALESCE(V467.val, CURRENT_DATE)) G ON 1=1
-                    WHERE L85.OBJ_TYPE_ID = 85
-                       AND L85.DATE_DEL IS NULL
-                    GROUP BY L85.PARENT_ID, V465.LISTVAL_ID
-                 ) AS E
-                    JOIN LISTVALS L ON L.LISTVAL_ID = E.LISTVAL_ID
-                    LEFT JOIN RES_GET(L.RES_ID, 'RU') R ON 1 = 1
-                    GROUP BY E.PARENT_ID
-            ) EXP ON EXP.PARENT_ID = L14.OBJ_ID
 
             LEFT JOIN (
                 SELECT L51.PARENT_ID,
@@ -220,7 +193,6 @@ BEGIN
             ,IS_GRADUATE
             ,RANG
             ,CATEGORY
-            ,EXPERIENCE
             ,MEDALS
             ,TEACH_DISCIPLINES
         HAVING
@@ -236,7 +208,6 @@ BEGIN
         ,:RANG
         ,:CATEGORY
         ,:POSITION_NAME
-        ,:EXPERIENCE
         ,:MEDALS
         ,:TEACH_DISCIPLINES
     DO
@@ -381,7 +352,6 @@ BEGIN
             VAL = COALESCE(RET_DIRECTION, NULL);
             SUSPEND;
 
-
             TAG_NAME = 'employees:r:retraining:r:date';
             VAL = COALESCE(RET_DATE, NULL);
             SUSPEND;
@@ -429,15 +399,67 @@ BEGIN
             VAL = COALESCE(REF_HOURS, NULL);
             SUSPEND;
 
-
             TAG_NAME = 'employees:r:refresher_courses:r:date';
             VAL = COALESCE(REF_DATE, NULL);
             SUSPEND;
         END
 
-        TAG_NAME = 'employees:r:experience';
-        VAL = :EXPERIENCE;
+        TAG_NAME = 'employees:r:experience::json&colon;array';
+        VAL = 1;
         SUSPEND;
+        FOR
+            SELECT
+                R.VAL AS EXP_TYPE
+                ,E.TOTAL_YEARS + FLOOR((E.TOTAL_MONTHS + FLOOR(E.TOTAL_DAYS / 30)) / 12) AS EXP_YEARS
+                ,MOD(E.TOTAL_MONTHS + FLOOR(E.TOTAL_DAYS / 30), 12) AS EXP_MONTHS
+                ,MOD(E.TOTAL_DAYS, 30) AS EXP_DAYS
+            FROM (
+                 SELECT
+                     L85.PARENT_ID,
+                     V465.LISTVAL_ID AS LISTVAL_ID,
+                     -- Получаем результаты из процедуры
+                     SUM(G.YEARS) AS TOTAL_YEARS,
+                     SUM(G.MONTHS) AS TOTAL_MONTHS,
+                     SUM(G.DAYS) AS TOTAL_DAYS
+                 FROM LINKS L85
+                          LEFT JOIN VALL V465 ON V465.OBJ_ID = L85.OBJ_ID AND V465.PARAM_ID = 465 AND V465.IS_DEL = 0 -- Ссылка на название
+                          LEFT JOIN VALD V466 ON V466.OBJ_ID = L85.OBJ_ID AND V466.PARAM_ID = 466 AND V466.IS_DEL = 0 -- Дата начала
+                          LEFT JOIN VALD V467 ON V467.OBJ_ID = L85.OBJ_ID AND V467.PARAM_ID = 467 AND V467.IS_DEL = 0 -- Дата конца
+                          LEFT JOIN SITE_GET_YEARS_MONTHS_DAYS(V466.val, COALESCE(V467.val, CURRENT_DATE)) G ON 1=1
+                 WHERE L85.OBJ_TYPE_ID = 85
+                    AND L85.DATE_DEL IS NULL
+                    AND L85.PARENT_ID = :ID
+                 GROUP BY L85.PARENT_ID, V465.LISTVAL_ID
+            ) AS E
+                JOIN LISTVALS L ON L.LISTVAL_ID = E.LISTVAL_ID
+                LEFT JOIN RES_GET(L.RES_ID, 'RU') R ON 1 = 1
+        INTO
+            EXP_TYPE
+            ,EXP_YEARS
+            ,EXP_MONTHS
+            ,EXP_DAYS
+        DO
+        BEGIN
+            TAG_NAME = 'employees:r:experience:r';
+            VAL = NULL;
+            SUSPEND;
+
+            TAG_NAME = 'employees:r:experience:r:type';
+            VAL = COALESCE(EXP_TYPE, NULL);
+            SUSPEND;
+
+            TAG_NAME = 'employees:r:experience:r:years';
+            VAL = EXP_YEARS;
+            SUSPEND;
+
+            TAG_NAME = 'employees:r:experience:r:months';
+            VAL = EXP_MONTHS;
+            SUSPEND;
+
+            TAG_NAME = 'employees:r:experience:r:days';
+            VAL = EXP_DAYS;
+            SUSPEND;
+        END
 
         TAG_NAME = 'employees:r:medals';
         VAL = :MEDALS;
