@@ -12,7 +12,6 @@ AS
     DECLARE CATEGORY varchar(50);
     DECLARE POSITION_NAME varchar(4000);
     DECLARE MEDALS varchar(4000);
-    DECLARE TEACH_DISCIPLINES varchar(4000);
 
     --образование
     DECLARE EDU_NAME varchar(500);
@@ -69,7 +68,6 @@ BEGIN
                 ),
                 ''
             ) AS MEDALS
-            ,TEACH.DISCIPLINES AS TEACH_DISCIPLINES
         FROM LINKS L14
             JOIN VALS V59 ON V59.OBJ_ID = L14.OBJ_ID AND V59.PARAM_ID = 59 --Фамилия
             JOIN VALS V60 ON V60.OBJ_ID = L14.OBJ_ID AND V60.PARAM_ID = 60 --Имя
@@ -96,16 +94,6 @@ BEGIN
 
             JOIN LINKS LP13 ON LP13.OBJ_ID = L15.OBJ_ID AND LP13.PARENT_TYPE_ID = 13 AND LP13.DATE_DEL IS NULL
             JOIN VALS V66 ON V66.OBJ_ID = LP13.PARENT_ID AND V66.PARAM_ID = 66 AND V66.IS_DEL = 0  -- Должность из текстового поля
-
-            LEFT JOIN (
-                SELECT L51.PARENT_ID,
-                       LIST(COALESCE(V376.val, ''),', ') AS DISCIPLINES
-                FROM LINKS L51
-                         LEFT JOIN VALS V376 ON V376.OBJ_ID = L51.OBJ_ID AND V376.PARAM_ID = 376 AND V376.IS_DEL = 0
-                WHERE L51.OBJ_TYPE_ID = 51
-                  AND L51.DATE_DEL IS NULL
-                GROUP BY L51.PARENT_ID
-            ) TEACH ON TEACH.PARENT_ID = L14.OBJ_ID
 
             LEFT JOIN (
                 SELECT
@@ -194,7 +182,6 @@ BEGIN
             ,RANG
             ,CATEGORY
             ,MEDALS
-            ,TEACH_DISCIPLINES
         HAVING
             LIST(DISTINCT V66.val,', ') LIKE '%Учитель%'
             OR LIST(DISTINCT V66.val,', ') LIKE '%Педагог%'
@@ -209,7 +196,6 @@ BEGIN
         ,:CATEGORY
         ,:POSITION_NAME
         ,:MEDALS
-        ,:TEACH_DISCIPLINES
     DO
     BEGIN
         -- Открываем новый элемент в массиве
@@ -466,7 +452,18 @@ BEGIN
         SUSPEND;
 
         TAG_NAME = 'employees:person:teach_disciplines';
-        VAL = :TEACH_DISCIPLINES;
+        VAL = NULL;
+        SELECT
+            LIST(COALESCE(V376.val, ''),', ') AS DISCIPLINES
+        FROM LINKS L51
+            LEFT JOIN VALS V376 ON V376.OBJ_ID = L51.OBJ_ID AND V376.PARAM_ID = 376 AND V376.IS_DEL = 0
+        WHERE
+            L51.OBJ_TYPE_ID = 51
+            AND L51.DATE_DEL IS NULL
+            AND L51.PARENT_ID = :ID
+        GROUP BY
+            L51.PARENT_ID
+        INTO VAL;
         SUSPEND;
     END
 END
