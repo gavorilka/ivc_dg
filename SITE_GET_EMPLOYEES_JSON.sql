@@ -11,7 +11,6 @@ AS
     DECLARE RANG varchar(50);
     DECLARE CATEGORY varchar(50);
     DECLARE POSITION_NAME varchar(4000);
-    DECLARE MEDALS varchar(4000);
 
     --образование
     DECLARE EDU_NAME varchar(500);
@@ -54,21 +53,8 @@ BEGIN
             ,R280.val AS RANG
             ,R281.val AS CATEGORY
             ,LIST(DISTINCT v66.val,', ') AS POSITION_NAME
-            ,NULLIF(
-                TRIM(BOTH ', '
-                     FROM
-                     COALESCE(
-                         CASE WHEN MED38.VAL IS NOT NULL AND MED38.VAL <> '' THEN MED38.VAL ELSE '' END ||
-                         CASE WHEN MED39.VAL IS NOT NULL AND MED39.VAL <> '' THEN ', ' || MED39.VAL ELSE '' END ||
-                         CASE WHEN MED40.VAL IS NOT NULL AND MED40.VAL <> '' THEN ', ' || MED40.VAL ELSE '' END ||
-                         CASE WHEN ACHIEV41.VAL IS NOT NULL AND ACHIEV41.VAL <> '' THEN ', ' || ACHIEV41.VAL ELSE '' END ||
-                         CASE WHEN ACHIEV42.VAL IS NOT NULL AND ACHIEV42.VAL <> '' THEN ', ' || ACHIEV42.VAL ELSE '' END,
-                         ''
-                     )
-                ),
-                ''
-            ) AS MEDALS
-        FROM LINKS L14
+        FROM
+            LINKS L14
             JOIN VALS V59 ON V59.OBJ_ID = L14.OBJ_ID AND V59.PARAM_ID = 59 --Фамилия
             JOIN VALS V60 ON V60.OBJ_ID = L14.OBJ_ID AND V60.PARAM_ID = 60 --Имя
             LEFT JOIN VALS V61 ON V61.OBJ_ID = L14.OBJ_ID AND V61.PARAM_ID = 61 --Отчество
@@ -95,82 +81,8 @@ BEGIN
             JOIN LINKS LP13 ON LP13.OBJ_ID = L15.OBJ_ID AND LP13.PARENT_TYPE_ID = 13 AND LP13.DATE_DEL IS NULL
             JOIN VALS V66 ON V66.OBJ_ID = LP13.PARENT_ID AND V66.PARAM_ID = 66 AND V66.IS_DEL = 0  -- Должность из текстового поля
 
-            LEFT JOIN (
-                SELECT
-                    L38.PARENT_ID
-                    ,LIST(R337.val || ' от ' || V339.val,', ') AS VAL
-                FROM LINKS L38 --медаль "В память 300-летия Санкт-Петербурга" чек337
-                    JOIN VALD V339 ON V339.OBJ_ID = L38.OBJ_ID AND V339.PARAM_ID = 339 AND V339.IS_DEL = 0 -- Дата присвоения
-                    JOIN VALL V337 ON V337.OBJ_ID = L38.OBJ_ID AND V337.PARAM_ID = 337 AND V337.IS_DEL = 0
-                    JOIN LISTVALS LV337 ON LV337.LISTVAL_ID = V337.LISTVAL_ID
-                    LEFT JOIN RES_GET(LV337.RES_ID,  'RU') R337 ON 1 = 1
-                WHERE L38.OBJ_TYPE_ID = 38
-                    AND L38.DATE_DEL IS NULL
-                GROUP BY L38.PARENT_ID
-            ) MED38 ON MED38.PARENT_ID = L14.OBJ_ID
-
-             LEFT JOIN (
-                SELECT
-                    L39.PARENT_ID
-                    --L39.obj_id,
-                    ,LIST(R345.val || ' от ' || V347.val,', ') AS VAL
-                FROM LINKS L39 --знак "Почетный работник общего образования РФ" чек345
-                    JOIN VALD V347 ON V347.OBJ_ID = L39.OBJ_ID AND V347.PARAM_ID = 347 AND V347.IS_DEL = 0 -- Дата присвоения
-                    JOIN VALL V345 ON V345.OBJ_ID = L39.OBJ_ID AND V345.PARAM_ID = 345 AND V345.IS_DEL = 0
-                    JOIN LISTVALS LV345 ON LV345.LISTVAL_ID = V345.LISTVAL_ID
-                    LEFT JOIN RES_GET(LV345.RES_ID,  'RU') R345 ON 1 = 1
-                WHERE L39.OBJ_TYPE_ID = 39
-                    AND L39.DATE_DEL IS NULL
-                GROUP BY L39.PARENT_ID
-            ) MED39 ON MED39.PARENT_ID = L14.OBJ_ID
-
-            LEFT JOIN (
-                SELECT
-                    L40.PARENT_ID
-                    --L40.obj_id
-                    ,LIST(COALESCE(R341.val,'') || ' от ' || V343.val,', ') AS VAL
-                FROM LINKS L40 --Знак "За гуманизацию школы Санкт-Петербурга" чек341 может что-то быть в 342, но повреждено извлекается как просто число, а не ссылка из таблицы ссылок
-                     JOIN VALD V343 ON V343.OBJ_ID = L40.OBJ_ID AND V343.PARAM_ID = 343 AND V343.IS_DEL = 0 -- Дата присвоения
-                     LEFT JOIN VALL V341 ON V341.OBJ_ID = L40.OBJ_ID AND V341.PARAM_ID = 341 AND V341.IS_DEL = 0
-                     JOIN LISTVALS LV341 ON LV341.LISTVAL_ID = V341.LISTVAL_ID
-                     LEFT JOIN RES_GET(LV341.RES_ID,  'RU') R341 ON 1 = 1
-                WHERE L40.OBJ_TYPE_ID = 40
-                    AND L40.DATE_DEL IS NULL
-                GROUP BY L40.PARENT_ID
-            ) MED40 ON MED40.PARENT_ID = L14.OBJ_ID
-
-            LEFT JOIN (
-                SELECT
-                    L41.PARENT_ID
-                    ,LIST(V349.val || ' год ' || COALESCE(R350.val,'') || ' ' || COALESCE(R351.val,''),', ') AS VAL
-                FROM LINKS L41 --Какие то достижения 349 год, 350 статус(победитель и т.д), 351 уровень(район) всё извлекать VALL и ренсить, кроме года он VALLD
-                    JOIN VALI V349 ON V349.OBJ_ID = L41.OBJ_ID AND V349.PARAM_ID = 349 AND V349.IS_DEL = 0  --Год Int
-                    JOIN VALL V350 ON V350.OBJ_ID = L41.OBJ_ID AND V350.PARAM_ID = 350 AND V350.IS_DEL = 0
-                    JOIN LISTVALS LV350 ON LV350.LISTVAL_ID = V350.LISTVAL_ID
-                    LEFT JOIN RES_GET(LV350.RES_ID,  'RU') R350 ON 1 = 1
-                    JOIN VALL V351 ON V351.OBJ_ID = L41.OBJ_ID AND V351.PARAM_ID = 351 AND V351.IS_DEL = 0
-                    JOIN LISTVALS LV351 ON LV351.LISTVAL_ID = V351.LISTVAL_ID
-                    LEFT JOIN RES_GET(LV351.RES_ID,  'RU') R351 ON 1 = 1
-                WHERE L41.OBJ_TYPE_ID = 41
-                    AND L41.DATE_DEL IS NULL
-                GROUP BY L41.PARENT_ID
-            ) ACHIEV41 ON ACHIEV41.PARENT_ID = L14.OBJ_ID
-
-            LEFT JOIN (
-                SELECT
-                    L42.PARENT_ID
-                    ,LIST(R353.val || ' в ' || V352.val || ' году',', ') AS VAL
-                FROM LINKS L42 --Лучший учитель в общем какие то достижения год в 352, название чек353 VALL
-                    JOIN VALI V352 ON V352.OBJ_ID = L42.OBJ_ID AND V352.PARAM_ID = 352 AND V352.IS_DEL = 0 -- Год Int
-                    JOIN VALL V353 ON V353.OBJ_ID = L42.OBJ_ID AND V353.PARAM_ID = 353 AND V353.IS_DEL = 0
-                    JOIN LISTVALS LV353 ON LV353.LISTVAL_ID = V353.LISTVAL_ID
-                    LEFT JOIN RES_GET(LV353.RES_ID,  'RU') R353 ON 1 = 1
-                WHERE L42.OBJ_TYPE_ID = 42
-                    AND L42.DATE_DEL IS NULL
-                GROUP BY L42.PARENT_ID
-            ) ACHIEV42 ON ACHIEV42.PARENT_ID = L14.OBJ_ID
-
-        WHERE L14.PARENT_TYPE_ID = 2
+        WHERE
+            L14.PARENT_TYPE_ID = 2
             AND L14.OBJ_TYPE_ID = 14
             AND L14.DATE_DEL is null
             AND V74.VAL is null
@@ -181,7 +93,6 @@ BEGIN
             ,IS_GRADUATE
             ,RANG
             ,CATEGORY
-            ,MEDALS
         HAVING
             LIST(DISTINCT V66.val,', ') LIKE '%Учитель%'
             OR LIST(DISTINCT V66.val,', ') LIKE '%Педагог%'
@@ -195,7 +106,6 @@ BEGIN
         ,:RANG
         ,:CATEGORY
         ,:POSITION_NAME
-        ,:MEDALS
     DO
     BEGIN
         -- Открываем новый элемент в массиве
@@ -245,7 +155,8 @@ BEGIN
                 ,R284.VAL AS EDU_LEVEL
                 ,R293.VAL AS EDU_PED_TYPE
                 ,V290.VAL AS EDU_DATE
-            FROM LINKS L33
+            FROM
+                LINKS L33
                 LEFT JOIN VALS V285 ON V285.OBJ_ID = L33.OBJ_ID AND V285.PARAM_ID = 285 AND V285.IS_DEL = 0 -- Название ОУ
                 LEFT JOIN VALS V292 ON V292.OBJ_ID = L33.OBJ_ID AND V292.PARAM_ID = 292 AND V292.IS_DEL = 0 -- Квалификаци, должность по диплому
                 LEFT JOIN VALS V291 ON V291.OBJ_ID = L33.OBJ_ID AND V291.PARAM_ID = 291 AND V291.IS_DEL = 0 -- Направление подготовки
@@ -307,7 +218,8 @@ BEGIN
                 ,V302.VAL AS RET_SPECIALITY
                 ,V301.VAL AS RET_DIRECTION
                 ,V300.VAL AS RET_DATE
-            FROM LINKS L35
+            FROM
+                LINKS L35
                 LEFT JOIN VALS V296 ON V296.OBJ_ID = L35.OBJ_ID AND V296.PARAM_ID = 296 AND V296.IS_DEL = 0 -- Название ОУ Переподготовки
                 LEFT JOIN VALS V302 ON V302.OBJ_ID = L35.OBJ_ID AND V302.PARAM_ID = 302 AND V302.IS_DEL = 0 -- Специальность переподготовки
                 LEFT JOIN VALS V301 ON V301.OBJ_ID = L35.OBJ_ID AND V301.PARAM_ID = 301 AND V301.IS_DEL = 0 -- Направленность подготовки
@@ -353,7 +265,8 @@ BEGIN
                 ,V305.VAL AS REF_TITLE
                 ,V306.VAL AS REF_HOURS
                 ,V310.VAL AS REF_DATE
-            FROM LINKS L36
+            FROM
+                LINKS L36
                 LEFT JOIN VALS V2335 ON V2335.OBJ_ID = L36.OBJ_ID AND V2335.PARAM_ID = 2335 AND V2335.IS_DEL = 0 -- Название ОУ КПК
                 LEFT JOIN VALS V305 ON V305.OBJ_ID = L36.OBJ_ID AND V305.PARAM_ID = 305 AND V305.IS_DEL = 0 -- Название КПК
                 LEFT JOIN VALI V306 ON V306.OBJ_ID = L36.OBJ_ID AND V306.PARAM_ID = 306 AND V306.IS_DEL = 0 -- Количество часов
@@ -407,11 +320,12 @@ BEGIN
                      SUM(G.YEARS) AS TOTAL_YEARS,
                      SUM(G.MONTHS) AS TOTAL_MONTHS,
                      SUM(G.DAYS) AS TOTAL_DAYS
-                 FROM LINKS L85
-                          LEFT JOIN VALL V465 ON V465.OBJ_ID = L85.OBJ_ID AND V465.PARAM_ID = 465 AND V465.IS_DEL = 0 -- Ссылка на название
-                          LEFT JOIN VALD V466 ON V466.OBJ_ID = L85.OBJ_ID AND V466.PARAM_ID = 466 AND V466.IS_DEL = 0 -- Дата начала
-                          LEFT JOIN VALD V467 ON V467.OBJ_ID = L85.OBJ_ID AND V467.PARAM_ID = 467 AND V467.IS_DEL = 0 -- Дата конца
-                          LEFT JOIN SITE_GET_YEARS_MONTHS_DAYS(V466.val, COALESCE(V467.val, CURRENT_DATE)) G ON 1=1
+                 FROM
+                    LINKS L85
+                    LEFT JOIN VALL V465 ON V465.OBJ_ID = L85.OBJ_ID AND V465.PARAM_ID = 465 AND V465.IS_DEL = 0 -- Ссылка на название
+                    LEFT JOIN VALD V466 ON V466.OBJ_ID = L85.OBJ_ID AND V466.PARAM_ID = 466 AND V466.IS_DEL = 0 -- Дата начала
+                    LEFT JOIN VALD V467 ON V467.OBJ_ID = L85.OBJ_ID AND V467.PARAM_ID = 467 AND V467.IS_DEL = 0 -- Дата конца
+                    LEFT JOIN SITE_GET_YEARS_MONTHS_DAYS(V466.val, COALESCE(V467.val, CURRENT_DATE)) G ON 1=1
                  WHERE L85.OBJ_TYPE_ID = 85
                     AND L85.DATE_DEL IS NULL
                     AND L85.PARENT_ID = :ID
@@ -448,14 +362,127 @@ BEGIN
         END
 
         TAG_NAME = 'employees:person:medals';
-        VAL = :MEDALS;
+        VAL = NULL;
+        WITH
+            MED38 AS (
+                --медаль "В память 300-летия Санкт-Петербурга" чек337
+                SELECT
+                    L38.PARENT_ID
+                     ,LIST(R337.val || ' от ' || V339.val,', ') AS VAL
+                FROM
+                    LINKS L38
+                    JOIN VALD V339 ON V339.OBJ_ID = L38.OBJ_ID AND V339.PARAM_ID = 339 AND V339.IS_DEL = 0 -- Дата присвоения
+                    JOIN VALL V337 ON V337.OBJ_ID = L38.OBJ_ID AND V337.PARAM_ID = 337 AND V337.IS_DEL = 0
+                    JOIN LISTVALS LV337 ON LV337.LISTVAL_ID = V337.LISTVAL_ID
+                    LEFT JOIN RES_GET(LV337.RES_ID,  'RU') R337 ON 1 = 1
+                WHERE
+                    L38.OBJ_TYPE_ID = 38
+                    AND L38.DATE_DEL IS NULL
+                    AND L38.PARENT_ID = :ID
+                GROUP BY L38.PARENT_ID
+            ),
+            MED39 AS (
+                --знак "Почетный работник общего образования РФ" чек345
+                SELECT
+                    L39.PARENT_ID
+                     --L39.obj_id,
+                     ,LIST(R345.val || ' от ' || V347.val,', ') AS VAL
+                FROM
+                    LINKS L39
+                    JOIN VALD V347 ON V347.OBJ_ID = L39.OBJ_ID AND V347.PARAM_ID = 347 AND V347.IS_DEL = 0 -- Дата присвоения
+                    JOIN VALL V345 ON V345.OBJ_ID = L39.OBJ_ID AND V345.PARAM_ID = 345 AND V345.IS_DEL = 0
+                    JOIN LISTVALS LV345 ON LV345.LISTVAL_ID = V345.LISTVAL_ID
+                    LEFT JOIN RES_GET(LV345.RES_ID,  'RU') R345 ON 1 = 1
+                WHERE
+                    L39.OBJ_TYPE_ID = 39
+                    AND L39.DATE_DEL IS NULL
+                    AND L39.PARENT_ID = :ID
+                GROUP BY L39.PARENT_ID
+            ),
+            MED40 AS (
+                --Знак "За гуманизацию школы Санкт-Петербурга" чек341 может что-то быть в 342, но повреждено извлекается как просто число, а не ссылка из таблицы ссылок
+                SELECT
+                    L40.PARENT_ID
+                     --L40.obj_id
+                     ,LIST(COALESCE(R341.val,'') || ' от ' || V343.val,', ') AS VAL
+                FROM
+                    LINKS L40
+                    JOIN VALD V343 ON V343.OBJ_ID = L40.OBJ_ID AND V343.PARAM_ID = 343 AND V343.IS_DEL = 0 -- Дата присвоения
+                    LEFT JOIN VALL V341 ON V341.OBJ_ID = L40.OBJ_ID AND V341.PARAM_ID = 341 AND V341.IS_DEL = 0
+                    JOIN LISTVALS LV341 ON LV341.LISTVAL_ID = V341.LISTVAL_ID
+                    LEFT JOIN RES_GET(LV341.RES_ID,  'RU') R341 ON 1 = 1
+                WHERE L40.OBJ_TYPE_ID = 40
+                    AND L40.DATE_DEL IS NULL
+                    AND L40.PARENT_ID = :ID
+                GROUP BY L40.PARENT_ID
+            ),
+            ACHIEV41 AS (
+                --Какие то достижения 349 год, 350 статус(победитель и т.д), 351 уровень(район) всё извлекать VALL и ренсить, кроме года он VALLD
+                SELECT
+                    L41.PARENT_ID
+                     ,LIST(V349.val || ' год ' || COALESCE(R350.val,'') || ' ' || COALESCE(R351.val,''),', ') AS VAL
+                FROM
+                    LINKS L41
+                    JOIN VALI V349 ON V349.OBJ_ID = L41.OBJ_ID AND V349.PARAM_ID = 349 AND V349.IS_DEL = 0  --Год Int
+                    JOIN VALL V350 ON V350.OBJ_ID = L41.OBJ_ID AND V350.PARAM_ID = 350 AND V350.IS_DEL = 0
+                    JOIN LISTVALS LV350 ON LV350.LISTVAL_ID = V350.LISTVAL_ID
+                    LEFT JOIN RES_GET(LV350.RES_ID,  'RU') R350 ON 1 = 1
+                    JOIN VALL V351 ON V351.OBJ_ID = L41.OBJ_ID AND V351.PARAM_ID = 351 AND V351.IS_DEL = 0
+                    JOIN LISTVALS LV351 ON LV351.LISTVAL_ID = V351.LISTVAL_ID
+                    LEFT JOIN RES_GET(LV351.RES_ID,  'RU') R351 ON 1 = 1
+                WHERE L41.OBJ_TYPE_ID = 41
+                    AND L41.DATE_DEL IS NULL
+                    AND L41.PARENT_ID = :ID
+                GROUP BY L41.PARENT_ID
+            ),
+            ACHIEV42 AS (
+                --Лучший учитель в общем какие то достижения год в 352, название чек353 VALL
+                SELECT
+                    L42.PARENT_ID
+                     ,LIST(R353.val || ' в ' || V352.val || ' году',', ') AS VAL
+                FROM
+                    LINKS L42
+                    JOIN VALI V352 ON V352.OBJ_ID = L42.OBJ_ID AND V352.PARAM_ID = 352 AND V352.IS_DEL = 0 -- Год Int
+                    JOIN VALL V353 ON V353.OBJ_ID = L42.OBJ_ID AND V353.PARAM_ID = 353 AND V353.IS_DEL = 0
+                    JOIN LISTVALS LV353 ON LV353.LISTVAL_ID = V353.LISTVAL_ID
+                    LEFT JOIN RES_GET(LV353.RES_ID,  'RU') R353 ON 1 = 1
+                WHERE L42.OBJ_TYPE_ID = 42
+                    AND L42.DATE_DEL IS NULL
+                    AND L42.PARENT_ID = :ID
+                GROUP BY L42.PARENT_ID
+            )
+
+        SELECT
+            NULLIF(
+                TRIM(BOTH ', '
+                FROM
+                    COALESCE(
+                        CASE WHEN MED38.VAL IS NOT NULL AND MED38.VAL <> '' THEN MED38.VAL ELSE '' END ||
+                        CASE WHEN MED39.VAL IS NOT NULL AND MED39.VAL <> '' THEN ', ' || MED39.VAL ELSE '' END ||
+                        CASE WHEN MED40.VAL IS NOT NULL AND MED40.VAL <> '' THEN ', ' || MED40.VAL ELSE '' END ||
+                        CASE WHEN ACHIEV41.VAL IS NOT NULL AND ACHIEV41.VAL <> '' THEN ', ' || ACHIEV41.VAL ELSE '' END ||
+                        CASE WHEN ACHIEV42.VAL IS NOT NULL AND ACHIEV42.VAL <> '' THEN ', ' || ACHIEV42.VAL ELSE '' END,
+                        ''
+                    )
+                ),
+                ''
+            ) AS MEDALS
+        FROM
+            MED38
+            FULL OUTER JOIN MED39 ON 1 = 1
+            FULL OUTER JOIN MED40 ON 1 = 1
+            FULL OUTER JOIN ACHIEV41 ON 1 = 1
+            FULL OUTER JOIN ACHIEV42 ON 1 = 1
+        INTO
+            VAL;
         SUSPEND;
 
         TAG_NAME = 'employees:person:teach_disciplines';
         VAL = NULL;
         SELECT
             LIST(COALESCE(V376.val, ''),', ') AS DISCIPLINES
-        FROM LINKS L51
+        FROM
+            LINKS L51
             LEFT JOIN VALS V376 ON V376.OBJ_ID = L51.OBJ_ID AND V376.PARAM_ID = 376 AND V376.IS_DEL = 0
         WHERE
             L51.OBJ_TYPE_ID = 51
@@ -463,7 +490,8 @@ BEGIN
             AND L51.PARENT_ID = :ID
         GROUP BY
             L51.PARENT_ID
-        INTO VAL;
+        INTO
+            VAL;
         SUSPEND;
     END
 END
