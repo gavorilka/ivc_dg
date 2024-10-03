@@ -255,7 +255,7 @@ BEGIN
             SUSPEND;
         END
 
-        TAG_NAME = 'employees:person:refresher_courses::json&colon;array';
+        TAG_NAME = 'employees:person:refresherCourses::json&colon;array';
         VAL = 1;
         SUSPEND;
 
@@ -282,23 +282,23 @@ BEGIN
             ,REF_DATE
         DO
         BEGIN
-            TAG_NAME = 'employees:person:refresher_courses:obj';
+            TAG_NAME = 'employees:person:refresherCourses:obj';
             VAL = NULL;
             SUSPEND;
 
-            TAG_NAME = 'employees:person:refresher_courses:obj:company';
+            TAG_NAME = 'employees:person:refresherCourses:obj:company';
             VAL = COALESCE(REF_COMPANY, NULL);
             SUSPEND;
 
-            TAG_NAME = 'employees:person:refresher_courses:obj:title';
+            TAG_NAME = 'employees:person:refresherCourses:obj:title';
             VAL = COALESCE(REF_TITLE, NULL);
             SUSPEND;
 
-            TAG_NAME = 'employees:person:refresher_courses:obj:hours';
+            TAG_NAME = 'employees:person:refresherCourses:obj:hours';
             VAL = COALESCE(REF_HOURS, NULL);
             SUSPEND;
 
-            TAG_NAME = 'employees:person:refresher_courses:obj:date';
+            TAG_NAME = 'employees:person:refresherCourses:obj:date';
             VAL = COALESCE(REF_DATE, NULL);
             SUSPEND;
         END
