@@ -118,7 +118,7 @@ BEGIN
         VAL = :ID;
         SUSPEND;
 
-        TAG_NAME = 'employees:person:full_name';
+        TAG_NAME = 'employees:person:fullName';
         VAL = :FULL_NAME;
         SUSPEND;
 
@@ -126,7 +126,7 @@ BEGIN
         VAL = :SEX;
         SUSPEND;
 
-        TAG_NAME = 'employees:person:is_graduate';
+        TAG_NAME = 'employees:person:graduate';
         VAL = :IS_GRADUATE;
         SUSPEND;
 
@@ -138,7 +138,7 @@ BEGIN
         VAL = :CATEGORY;
         SUSPEND;
 
-        TAG_NAME = 'employees:person:position_name';
+        TAG_NAME = 'employees:person:positionsName';
         VAL = :POSITION_NAME;
         SUSPEND;
 
@@ -477,7 +477,7 @@ BEGIN
             VAL;
         SUSPEND;
 
-        TAG_NAME = 'employees:person:teach_disciplines';
+        TAG_NAME = 'employees:person:teachDisciplines';
         VAL = NULL;
         SELECT
             LIST(COALESCE(V376.val, ''),', ') AS DISCIPLINES
