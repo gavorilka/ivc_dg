@@ -37,6 +37,10 @@ AS
     DECLARE EXP_YEARS integer;
     DECLARE EXP_MONTHS integer;
     DECLARE EXP_DAYS integer;
+
+    --Ссылка на картинки
+    DECLARE PIC_ID bigint;
+    DECLARE PIC_NAME varchar(500);
 BEGIN
     -- Открываем массив сотрудников
     TAG_NAME = 'employees::json&colon;array';
@@ -493,5 +497,32 @@ BEGIN
         INTO
             VAL;
         SUSPEND;
+
+        TAG_NAME = 'employees:person:pic';
+        VAL = NULL;
+        SUSPEND;
+        FOR
+            SELECT
+                V240.blob_id AS PIC_ID
+                ,V240.val AS PIC_NAME
+            FROM
+                VALB V240
+            WHERE
+                V240.OBJ_ID = :ID
+                AND V240.PARAM_ID = 240
+                AND V240.IS_DEL = 0
+            INTO
+                PIC_ID
+                ,PIC_NAME
+        DO
+        BEGIN
+            TAG_NAME = 'employees:person:pic:id';
+            VAL = COALESCE(PIC_ID, NULL);
+            SUSPEND;
+
+            TAG_NAME = 'employees:person:pic:name';
+            VAL = COALESCE(PIC_NAME, NULL);
+            SUSPEND;
+        END
     END
 END
