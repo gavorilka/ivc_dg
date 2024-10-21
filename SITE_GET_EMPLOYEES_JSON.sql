@@ -101,6 +101,7 @@ BEGIN
             LIST(DISTINCT V66.val,', ') LIKE '%Учитель%'
             OR LIST(DISTINCT V66.val,', ') LIKE '%Педагог%'
             OR LIST(DISTINCT V66.val,', ') LIKE '%Воспитатель%'
+            OR LIST(DISTINCT V66.val,', ') LIKE '%Советник директора%'
         ORDER BY FULL_NAME, POSITION_NAME
     INTO
         :ID
@@ -313,23 +314,28 @@ BEGIN
         FOR
             SELECT
                 R.VAL AS EXP_TYPE
-                ,E.TOTAL_YEARS + FLOOR((E.TOTAL_MONTHS + FLOOR(E.TOTAL_DAYS / 30)) / 12) AS EXP_YEARS
-                ,MOD(E.TOTAL_MONTHS + FLOOR(E.TOTAL_DAYS / 30), 12) AS EXP_MONTHS
-                ,MOD(E.TOTAL_DAYS, 30) AS EXP_DAYS
+                --,E.TOTAL_YEARS + FLOOR((E.TOTAL_MONTHS + FLOOR(E.TOTAL_DAYS / 30)) / 12) AS EXP_YEARS
+                --,MOD(E.TOTAL_MONTHS + FLOOR(E.TOTAL_DAYS / 30), 12) AS EXP_MONTHS
+                --,MOD(E.TOTAL_DAYS, 30) AS EXP_DAYS
+                ,FLOOR((E.TOTAL_DAYS - MOD(E.TOTAL_DAYS, 360)) / 360) AS EXP_YEARS
+                ,FLOOR((MOD(E.TOTAL_DAYS, 360) - MOD(MOD(E.TOTAL_DAYS, 360),30))/30) AS EXP_MONTHS
+                ,MOD(MOD(E.TOTAL_DAYS, 360),30) AS EXP_DAYS
             FROM (
                  SELECT
                      L85.PARENT_ID,
                      V465.LISTVAL_ID AS LISTVAL_ID,
                      -- Получаем результаты из процедуры
-                     SUM(G.YEARS) AS TOTAL_YEARS,
-                     SUM(G.MONTHS) AS TOTAL_MONTHS,
-                     SUM(G.DAYS) AS TOTAL_DAYS
+                     --SUM(G.YEARS) AS TOTAL_YEARS,
+                     --SUM(G.MONTHS) AS TOTAL_MONTHS,
+                     --SUM(G.DAYS) AS TOTAL_DAYS
+                     SUM(G.DAYS360_COUNT) AS TOTAL_DAYS
                  FROM
                     LINKS L85
                     LEFT JOIN VALL V465 ON V465.OBJ_ID = L85.OBJ_ID AND V465.PARAM_ID = 465 AND V465.IS_DEL = 0 -- Ссылка на название
                     LEFT JOIN VALD V466 ON V466.OBJ_ID = L85.OBJ_ID AND V466.PARAM_ID = 466 AND V466.IS_DEL = 0 -- Дата начала
                     LEFT JOIN VALD V467 ON V467.OBJ_ID = L85.OBJ_ID AND V467.PARAM_ID = 467 AND V467.IS_DEL = 0 -- Дата конца
-                    LEFT JOIN SITE_GET_YEARS_MONTHS_DAYS(V466.val, COALESCE(V467.val, CURRENT_DATE)) G ON 1=1
+                    LEFT JOIN GET_DAYS360_COUNT(V466.val, COALESCE(V467.val, CURRENT_DATE)) G ON 1=1
+                    --LEFT JOIN SITE_GET_YEARS_MONTHS_DAYS(V466.val, COALESCE(V467.val, CURRENT_DATE)) G ON 1=1
                  WHERE L85.OBJ_TYPE_ID = 85
                     AND L85.DATE_DEL IS NULL
                     AND L85.PARENT_ID = :ID
