@@ -41,6 +41,10 @@ AS
     --Ссылка на картинки
     DECLARE PIC_ID bigint;
     DECLARE PIC_NAME varchar(500);
+
+    --Группа сотрудников
+    DECLARE GROUP_EMP_ID bigint;
+    DECLARE GROUP_EMP_NAME varchar(500);
 BEGIN
     -- Открываем массив сотрудников
     TAG_NAME = 'employees::json&colon;array';
@@ -56,7 +60,7 @@ BEGIN
             ,R279.val AS IS_GRADUATE
             ,R280.val AS RANG
             ,R281.val AS CATEGORY
-            ,LIST(DISTINCT v66.val,', ') AS POSITION_NAME
+            ,POS.POSITION_NAME AS POSITION_NAME
         FROM
             LINKS L14
             JOIN VALS V59 ON V59.OBJ_ID = L14.OBJ_ID AND V59.PARAM_ID = 59 --Фамилия
@@ -79,30 +83,38 @@ BEGIN
             JOIN LISTVALS LV281 ON LV281.LISTVAL_ID = V281.LISTVAL_ID
             LEFT JOIN RES_GET(LV281.RES_ID,  'RU') R281 ON 1 = 1
 
-            JOIN LINKS L15 ON L15.PARENT_ID = L14.OBJ_ID AND L15.OBJ_TYPE_ID = 15 AND L15.DATE_DEL IS NULL
-            LEFT JOIN VALD V74 ON V74.OBJ_ID = L15.OBJ_ID AND V74.PARAM_ID = 74 AND V74.IS_DEL = 0 -- Дата уволнения
-
-            JOIN LINKS LP13 ON LP13.OBJ_ID = L15.OBJ_ID AND LP13.PARENT_TYPE_ID = 13 AND LP13.DATE_DEL IS NULL
-            JOIN VALS V66 ON V66.OBJ_ID = LP13.PARENT_ID AND V66.PARAM_ID = 66 AND V66.IS_DEL = 0  -- Должность из текстового поля
+            JOIN (
+                SELECT
+                    L15.PARENT_ID AS PARENT_ID
+                    ,V74.VAL AS LEFT_DATE
+                    ,LIST(DISTINCT V66.val,', ') AS POSITION_NAME
+                FROM
+                    LINKS L15
+                    LEFT JOIN VALD V74 ON V74.OBJ_ID = L15.OBJ_ID AND V74.PARAM_ID = 74 AND V74.IS_DEL = 0 -- Дата уволнения
+                    JOIN LINKS LP13 ON LP13.OBJ_ID = L15.OBJ_ID AND LP13.PARENT_TYPE_ID = 13 AND LP13.DATE_DEL IS NULL
+                    JOIN VALS V66 ON V66.OBJ_ID = LP13.PARENT_ID AND V66.PARAM_ID = 66 AND V66.IS_DEL = 0  -- Должность
+                WHERE
+                    L15.OBJ_TYPE_ID = 15
+                    AND L15.DATE_DEL IS NULL
+                    AND V74.VAL IS NULL
+                GROUP BY
+                    PARENT_ID
+                    ,LEFT_DATE
+            ) POS ON POS.PARENT_ID = L14.OBJ_ID
 
         WHERE
             L14.PARENT_TYPE_ID = 2
             AND L14.OBJ_TYPE_ID = 14
-            AND L14.DATE_DEL is null
-            AND V74.VAL is null
-        GROUP BY
-            ID
-            ,FULL_NAME
-            ,SEX
-            ,IS_GRADUATE
-            ,RANG
-            ,CATEGORY
-        HAVING
-            LIST(DISTINCT V66.val,', ') LIKE '%Учитель%'
-            OR LIST(DISTINCT V66.val,', ') LIKE '%Педагог%'
-            OR LIST(DISTINCT V66.val,', ') LIKE '%Воспитатель%'
-            OR LIST(DISTINCT V66.val,', ') LIKE '%Советник директора%'
-        ORDER BY FULL_NAME, POSITION_NAME
+            AND L14.DATE_DEL IS NULL
+            AND (
+                POSITION_NAME LIKE '%Учитель%'
+                OR POSITION_NAME LIKE '%Педагог%'
+                OR POSITION_NAME LIKE '%Воспитатель%'
+                OR POSITION_NAME LIKE '%Советник директора%'
+                OR POSITION_NAME LIKE '%Заведующий лабораторией%'
+            )
+        ORDER BY
+            FULL_NAME
     INTO
         :ID
         ,:FULL_NAME
@@ -147,7 +159,37 @@ BEGIN
         VAL = :POSITION_NAME;
         SUSPEND;
 
-        -- Если есть вложенные JSON-массивы, например, EDU
+        -- Группа сотрудников
+        TAG_NAME = 'employees:person:groupOfEmployee';
+        VAL = NULL;
+        SUSPEND;
+        FOR
+            SELECT
+                V269.LISTVAL_ID AS GROUP_EMP_ID
+                ,RV269.VAL AS GROUP_EMP_NAME
+            FROM
+                VALL V269 -- тут ссылка на группу сотрудника
+                LEFT JOIN LISTVALS LV269 ON LV269.LISTVAL_ID = V269.LISTVAL_ID
+                LEFT JOIN RES_GET(LV269.RES_ID, 'RU') RV269 ON 1 = 1
+            WHERE
+                V269.OBJ_ID = :ID
+                AND V269.PARAM_ID = 269
+                AND V269.IS_DEL = 0
+            INTO
+                GROUP_EMP_ID
+                ,GROUP_EMP_NAME
+        DO
+        BEGIN
+            TAG_NAME = 'employees:person:groupOfEmployee:id';
+            VAL = COALESCE(GROUP_EMP_ID, NULL);
+            SUSPEND;
+
+            TAG_NAME = 'employees:person:groupOfEmployee:name';
+            VAL = COALESCE(GROUP_EMP_NAME, NULL);
+            SUSPEND;
+        END
+
+        -- JSON-массив EDU
         TAG_NAME = 'employees:person:edu::json&colon;array';
         VAL = 1;
         SUSPEND;
@@ -314,9 +356,6 @@ BEGIN
         FOR
             SELECT
                 R.VAL AS EXP_TYPE
-                --,E.TOTAL_YEARS + FLOOR((E.TOTAL_MONTHS + FLOOR(E.TOTAL_DAYS / 30)) / 12) AS EXP_YEARS
-                --,MOD(E.TOTAL_MONTHS + FLOOR(E.TOTAL_DAYS / 30), 12) AS EXP_MONTHS
-                --,MOD(E.TOTAL_DAYS, 30) AS EXP_DAYS
                 ,FLOOR((E.TOTAL_DAYS - MOD(E.TOTAL_DAYS, 360)) / 360) AS EXP_YEARS
                 ,FLOOR((MOD(E.TOTAL_DAYS, 360) - MOD(MOD(E.TOTAL_DAYS, 360),30))/30) AS EXP_MONTHS
                 ,MOD(MOD(E.TOTAL_DAYS, 360),30) AS EXP_DAYS
@@ -324,10 +363,6 @@ BEGIN
                  SELECT
                      L85.PARENT_ID,
                      V465.LISTVAL_ID AS LISTVAL_ID,
-                     -- Получаем результаты из процедуры
-                     --SUM(G.YEARS) AS TOTAL_YEARS,
-                     --SUM(G.MONTHS) AS TOTAL_MONTHS,
-                     --SUM(G.DAYS) AS TOTAL_DAYS
                      SUM(G.DAYS360_COUNT) AS TOTAL_DAYS
                  FROM
                     LINKS L85
@@ -335,7 +370,6 @@ BEGIN
                     LEFT JOIN VALD V466 ON V466.OBJ_ID = L85.OBJ_ID AND V466.PARAM_ID = 466 AND V466.IS_DEL = 0 -- Дата начала
                     LEFT JOIN VALD V467 ON V467.OBJ_ID = L85.OBJ_ID AND V467.PARAM_ID = 467 AND V467.IS_DEL = 0 -- Дата конца
                     LEFT JOIN GET_DAYS360_COUNT(V466.val, COALESCE(V467.val, CURRENT_DATE)) G ON 1=1
-                    --LEFT JOIN SITE_GET_YEARS_MONTHS_DAYS(V466.val, COALESCE(V467.val, CURRENT_DATE)) G ON 1=1
                  WHERE L85.OBJ_TYPE_ID = 85
                     AND L85.DATE_DEL IS NULL
                     AND L85.PARENT_ID = :ID
