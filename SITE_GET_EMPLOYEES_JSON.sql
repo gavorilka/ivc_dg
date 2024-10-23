@@ -86,7 +86,6 @@ BEGIN
             JOIN (
                 SELECT
                     L15.PARENT_ID AS PARENT_ID
---                     ,V74.VAL AS LEFT_DATE
                     ,LIST(DISTINCT V66.val,', ') AS POSITION_NAME
                 FROM
                     LINKS L15
@@ -99,7 +98,6 @@ BEGIN
                     AND V74.VAL IS NULL
                 GROUP BY
                     PARENT_ID
---                     ,LEFT_DATE
             ) POS ON POS.PARENT_ID = L14.OBJ_ID
 
         WHERE
