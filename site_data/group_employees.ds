@@ -6,7 +6,7 @@ Writer.OpenTag('data');
 
   Writer.WriteAttribute('json:array', '1');
 
-  Query.SQL.Text := 'select * from SITE_GET_EMPLOYEES;';
+  Query.SQL.Text := 'select * from SITE_GET_GROUP_EMPLOYEES;';
 
   Query.Open;
 
