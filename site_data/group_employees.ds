@@ -22,7 +22,4 @@ Writer.OpenTag('data');
     Query.Next;
   end;
 
-    //SerializeDataset(Query, Writer);
-    //Query.Close;
-
 Writer.CloseTag('data');
