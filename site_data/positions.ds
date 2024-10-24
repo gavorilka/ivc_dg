@@ -5,7 +5,7 @@ Writer.OpenTag('data');
 
     Writer.WriteAttribute('json:array', '1');
 
-    Query.SQL.Text := 'select * from SITE_GET_GROUP_EMPLOYEES;';
+    Query.SQL.Text := 'select * from SITE_GET_POSITIONS_EMPLOYEES';
 
     Query.Open;
 
@@ -13,9 +13,7 @@ Writer.OpenTag('data');
         Writer.OpenTag('r');
         var I: Integer;
         for I := 0 to Query.FieldCount - 1 do begin
-            Writer.OpenTag(AnsiLowerCase(Query.Fields[I].FieldName));
             Writer.WriteValue(Query.Fields[I].AsString);
-            Writer.CloseTag(AnsiLowerCase(Query.Fields[I].FieldName));
         end;
         Writer.CloseTag('r');
         Query.Next;

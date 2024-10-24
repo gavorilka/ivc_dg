@@ -4,6 +4,7 @@
   <services> 
     <service name="teachers" type="online" method="get" outputformat="json" auth="none"/>
     <service name="group_employees" type="online" method="get" outputformat="json" auth="none"/>
+    <service name="positions" type="online" method="get" outputformat="json" auth="none"/>
     <service name="files_stream" type="online" method="get" outputformat="xml" auth="none"/>
   </services>
 </app>

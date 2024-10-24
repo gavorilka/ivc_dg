@@ -1,28 +1,29 @@
-  var Ct: String;
-  Ct := AnsiLowerCase(Params.Values['name']);
-  while Pos('.', Ct) > 0 do Delete(Ct, 1, Pos('.', Ct));
+    if (Params.Values['name'] = '') or (Params.Values['id'] = '') then
+        raise Exception.Create('Ошибка: параметры не должны быть пустыми');
 
-  var DC: TZConnection;
-  DC := TZConnection.Create(Connection, 'BLOB.FDB');
+    var Ct: String;
+    Ct := AnsiLowerCase(Params.Values['name']);
+    while Pos('.', Ct) > 0 do Delete(Ct, 1, Pos('.', Ct));
 
-  var BlobQuery: TZQuery;
-  BlobQuery := TZQuery.Create;
-  BlobQuery.Connection := DC;
+    var DC: TZConnection;
+    DC := TZConnection.Create(Connection, 'BLOB.FDB');
 
-  BlobQuery.SQL.Text := 'select VAL from BLOBS where BLOB_ID = :OBJ_ID';
-  if Params.Values['id'] <> '' then BlobQuery.ParamByName('OBJ_ID').AsLargeInt := StrToInt(Params.Values['id']);
-  BlobQuery.Open;
-  if BlobQuery.EOF then raise Exception.Create('Файл внесен в систему, но утрачен');
+    var BlobQuery: TZQuery;
+    BlobQuery := TZQuery.Create;
+    BlobQuery.Connection := DC;
 
-  // Смотрим типы файлов
-  LogMessage('Файл имеет формат ' + Ct);
-  if Ct = 'webp' then ContentType := 'image/webp'
-//  else if Ct = 'doc' then ContentType := 'application/msword'
-//  else if Ct = 'zip' then ContentType := 'application/zip'
-//  else if Ct = 'tif' then ContentType := 'image/tiff'
-//  else if Ct = 'pdf' then ContentType := 'application/pdf'
-  else if Ct = 'png' then ContentType := 'image/png'
-  else if Ct = 'jpg' then ContentType := 'image/jpeg'
-  else ContentType := 'application/octet-stream';
+    BlobQuery.SQL.Text := 'select VAL from BLOBS where BLOB_ID = :OBJ_ID';
+    if Params.Values['id'] <> '' then BlobQuery.ParamByName('OBJ_ID').AsLargeInt := StrToInt(Params.Values['id']);
+    BlobQuery.Open;
+    if BlobQuery.EOF then raise Exception.Create('Файл внесен в систему, но утрачен');
 
-  BlobQuery.Fields[0].SaveToStream(ContentData);
+    // Смотрим типы файлов
+    // LogMessage('Файл имеет формат ' + Ct);
+    if Ct = 'webp' then ContentType := 'image/webp'
+    else if Ct = 'svg' then ContentType := 'image/svg+xml'
+    else if Ct = 'jpg' then ContentType := 'image/jpeg'
+    else if Ct = 'png' then ContentType := 'image/png'
+    else raise Exception.Create('Недопустимое расширение файла');
+    //else ContentType := 'application/octet-stream';
+
+    BlobQuery.Fields[0].SaveToStream(ContentData);
