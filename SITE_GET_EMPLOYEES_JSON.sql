@@ -109,7 +109,9 @@ BEGIN
                 OR POSITION_NAME LIKE '%Педагог%'
                 OR POSITION_NAME LIKE '%Воспитатель%'
                 OR POSITION_NAME LIKE '%Советник директора%'
+                OR POSITION_NAME LIKE '%Заместитель директора%'
                 OR POSITION_NAME LIKE '%Заведующий лабораторией%'
+                OR POSITION_NAME LIKE '%Методист%'
             )
         ORDER BY
             FULL_NAME
