@@ -86,12 +86,14 @@ BEGIN
             JOIN (
                 SELECT
                     L15.PARENT_ID AS PARENT_ID
-                    ,LIST(DISTINCT V66.val,', ') AS POSITION_NAME
+                    ,LIST(DISTINCT V3543.v,', ') AS POSITION_NAME
+                   -- ,LIST(DISTINCT V66.val,', ') AS POSITION_NAME
                 FROM
                     LINKS L15
                     LEFT JOIN VALD V74 ON V74.OBJ_ID = L15.OBJ_ID AND V74.PARAM_ID = 74 AND V74.IS_DEL = 0 -- Дата уволнения
                     JOIN LINKS LP13 ON LP13.OBJ_ID = L15.OBJ_ID AND LP13.PARENT_TYPE_ID = 13 AND LP13.DATE_DEL IS NULL
-                    JOIN VALS V66 ON V66.OBJ_ID = LP13.PARENT_ID AND V66.PARAM_ID = 66 AND V66.IS_DEL = 0  -- Должность
+                    -- JOIN VALS V66 ON V66.OBJ_ID = LP13.PARENT_ID AND V66.PARAM_ID = 66 AND V66.IS_DEL = 0  -- Должность
+                    JOIN VAL_GET(LP13.OBJ_ID, 3543,0,1) V3543 ON 1=1
                 WHERE
                     L15.OBJ_TYPE_ID = 15
                     AND L15.DATE_DEL IS NULL
